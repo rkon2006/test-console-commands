@@ -78,7 +78,7 @@ function asyncWriteFs(fileName, data, cb) {
 
 async function checkStatus() {
   await execGitCmd(["status"])
-    .then(() => execGitCmd(['add', '-A']))
+    .then(() => execGitCmd(['add', 'package.json']))
     .then(() => execGitCmd(['status']))
     .then(() => execGitCmd(['commit', '-m', '"Some dummy commit desc']))
     .then(() => execGitCmd(['status']))
@@ -87,9 +87,9 @@ async function checkStatus() {
 async function raiseVersion() {
   await execGitCmd(["checkout", "master"])
     .then(() => execGitCmd(["pull", "origin", "master"]))
-    .then(() => execGitCmd(["pull", "origin", "master"]))
     .catch(console.error);
 
+  return;
   console.log("Switched to master and pulled the recent state");
 
   let file;
@@ -150,5 +150,5 @@ async function raiseVersion() {
   //   .catch(console.error)
 }
 
-checkStatus();
-// raiseVersion();
+// checkStatus();
+raiseVersion();

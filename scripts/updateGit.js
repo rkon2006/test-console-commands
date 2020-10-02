@@ -78,26 +78,48 @@ function asyncWriteFs(fileName, data, cb) {
 
 async function checkStatus() {
   await execGitCmd(["status"])
-    .then(() => execGitCmd(['add', 'package.json']))
-    .then(() => execGitCmd(['status']))
-    .then(() => execGitCmd(['commit', '-m', '"Some dummy commit desc']))
-    .then(() => execGitCmd(['status']))
+    .then(() => execGitCmd(["add", "package.json"]))
+    .then(() => execGitCmd(["status"]))
+    .then(() => execGitCmd(["commit", "-m", '"Some dummy commit desc']))
+    .then(() => execGitCmd(["status"]))
     .then(console.log);
 }
-async function raiseVersion() {
-  await execGitCmd(["checkout", "master"])
+
+function switchToMaster() {
+  return execGitCmd(["checkout", "master"])
     .then(() => execGitCmd(["pull", "origin", "master"]))
     .then(() => execGitCmd(["status"]))
     .then(console.log)
     .catch(console.error);
+}
 
-  return;
-  console.log("Switched to master and pulled the recent state");
+function createNewReleaseBranch(version) {
+  return execGitCmd(["checkout", "-b", version])
+    .then(() => execGitCmd(["status"]))
+    .then(console.log)
+    .catch(console.error);
+}
 
-  let file;
+function commitAndPushBranch(version) {
+  return execGitCmd(["add", "-A"])
+    .then(() =>
+      execGitCmd([
+        "commit",
+        "-am",
+        `Bumped version in package.json to ${version}`,
+      ])
+    )
+    .then(() => execGitCmd(["push", "-u", "origin", version]))
+    .then(() => execGitCmd(["status"]))
+    .then(console.log)
+    .catch(console.error);
+}
+
+async function updatePackageJson() {
+  let fileString;
 
   try {
-    file = await asyncReadFs("./package.json", "utf8");
+    fileString = await asyncReadFs("./package.json", "utf8");
   } catch (e) {
     console.error(e);
   }
@@ -107,7 +129,7 @@ async function raiseVersion() {
     return;
   }
 
-  const packageJson = JSON.parse(file);
+  const packageJson = JSON.parse(fileString);
   const currentVersion = packageJson.version;
   const nextLastPart = Number(packageJson.version.split(".")[2]) + 1;
   const nextVersion = `${currentVersion
@@ -117,39 +139,31 @@ async function raiseVersion() {
 
   packageJson.version = nextVersion;
 
-  await execGitCmd(["checkout", "-b", nextVersion])
-    .then(() => execGitCmd(["status"]))
-    .then(console.log)
-    .catch(console.error);
+  return packageJson;
+}
 
+async function writeUpdatedPackageJson(data) {
   try {
-    await asyncWriteFs("./package.json", JSON.stringify(packageJson, null, 2));
+    await asyncWriteFs("./package.json", JSON.stringify(data, null, 2));
   } catch (e) {
     console.error(e);
   }
+}
+async function raiseVersion() {
+  await switchToMaster();
+
+  console.log("Switched to master and pulled the recent state");
+
+  const packageJson =  await updatePackageJson();
+
+  await createNewReleaseBranch(packageJson.version);
+
+  await writeUpdatedPackageJson(packageJson);
 
   console.log("Saved changes in package.json file");
   console.log("Now pushing a new branch into GitHub...");
-  await execGitCmd(["add", "-A"])
-    .then(() =>
-      execGitCmd([
-        "commit",
-        "-am",
-        `Bumped version in package.json to ${nextVersion}`,
-      ])
-    )
-    .then(() => execGitCmd(["push", "-u", "origin", nextVersion]))
-    .then(() => execGitCmd(["status"]))
-    .then(console.log)
-    .catch(console.error);
-  console.log("bbb file", file);
-  console.log("bbb raiseVersion is called", { nextVersion, packageJson });
-  // execGitCmd(['init'])
-  //   .then(() => execGitCmd(['add', '-A']))
-  //   .then(() => execGitCmd(['commit', '-m', '"first commit"']))
-  //   .then(() => execGitCmd(['status']))
-  //   .then(console.log)
-  //   .catch(console.error)
+
+  await commitAndPushBranch(packageJson.version);
 }
 
 // checkStatus();

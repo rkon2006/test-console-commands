@@ -87,6 +87,8 @@ async function checkStatus() {
 async function raiseVersion() {
   await execGitCmd(["checkout", "master"])
     .then(() => execGitCmd(["pull", "origin", "master"]))
+    .then(() => execGitCmd(["status"]))
+    .then(console.log)
     .catch(console.error);
 
   return;

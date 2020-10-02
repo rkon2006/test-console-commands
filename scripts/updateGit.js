@@ -35,6 +35,7 @@ function raiseVersion() {
     .then(() => execGitCmd(['add', '-A']))
     .then(() => execGitCmd(['commit', '-m', '"first commit"']))
     .then(() => execGitCmd(['status']))
+    .then(console.log)
     .catch(console.error)
 }
 

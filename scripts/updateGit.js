@@ -75,6 +75,15 @@ function asyncWriteFs(fileName, data, cb) {
     });
   });
 }
+
+async function checkStatus() {
+  await execGitCmd(["status"])
+    .then(() => execGitCmd(['add', '-A']))
+    .then(() => execGitCmd(['status']))
+    .then(() => execGitCmd(['commit', '-m', '"Some dummy commit desc']))
+    .then(() => execGitCmd(['status']))
+    .then(console.log);
+}
 async function raiseVersion() {
   await execGitCmd(["checkout", "master"])
     .then(() => execGitCmd(["pull", "origin", "master"]))
@@ -117,10 +126,16 @@ async function raiseVersion() {
     console.error(e);
   }
 
-  console.log('Saved changes in package.json file');
-  console.log('Now pushing a new branch into GitHub...');
-  await execGitCmd(['add', '-A'])
-    .then(() => execGitCmd(["commit", "-am", `Bumped version in package.json to ${nextVersion}`]))
+  console.log("Saved changes in package.json file");
+  console.log("Now pushing a new branch into GitHub...");
+  await execGitCmd(["add", "-A"])
+    .then(() =>
+      execGitCmd([
+        "commit",
+        "-am",
+        `Bumped version in package.json to ${nextVersion}`,
+      ])
+    )
     .then(() => execGitCmd(["push", "-u", "origin", nextVersion]))
     .then(() => execGitCmd(["status"]))
     .then(console.log)
@@ -135,4 +150,5 @@ async function raiseVersion() {
   //   .catch(console.error)
 }
 
-raiseVersion();
+checkStatus();
+// raiseVersion();

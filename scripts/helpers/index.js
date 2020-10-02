@@ -65,13 +65,17 @@ function asyncReadFs(path, encoding, cb) {
 function asyncWriteFs(fileName, data, cb) {
   return new Promise((resolve, reject) => {
     fs.writeFile(fileName, data, (err) => {
-      if (err) throw err;
+      if (err) {
+        return reject(err);
+      }
 
       if (typeof cb === "function") {
-        cb(err);
+        cb();
       }
 
       console.log("The file has been saved!");
+
+      return resolve();
     });
   });
 }
@@ -144,7 +148,7 @@ async function updatePackageJson() {
 
 async function writeUpdatedPackageJson(data) {
   try {
-    await asyncWriteFs("./package.json", JSON.stringify(data, null, 2) + '\n');
+    await asyncWriteFs("./package.json", JSON.stringify(data, null, 2) + "\n");
   } catch (e) {
     console.error(e);
   }
